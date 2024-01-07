@@ -7,6 +7,7 @@ const port = 3000;
 const fs = require('fs');
 const auth = require('./auth');
 const { default: axios } = require('axios');
+const { validateJwt } = require('./jwt');
 
 const app = express();
 app.use(bodyParser.json());
@@ -86,7 +87,7 @@ app.use((req, res, next) => {
 	next();
 });
 
-app.get('/', async (req, res) => {
+app.use(async (req, res, next) => {
 	if (req.session.username) {
 		const tokenLifetime = req.session.expires_at - Math.floor(Date.now() / 1000);
 		console.log(tokenLifetime);
@@ -96,6 +97,21 @@ app.get('/', async (req, res) => {
 			req.session.access_token = response.access_token;
 			req.session.expires_at = Math.floor(Date.now() / 1000) + response.expires_in;
 		}
+	}
+	next();
+});
+
+app.use((req, res, next) => {
+	if (req.session.access_token) {
+		validateJwt(req.session.access_token);
+	}
+	next();
+});
+
+
+
+app.get('/', async (req, res) => {
+	if (req.session.username) {
 		return res.json({
 			username: req.session.username,
 			logout: 'http://localhost:3000/logout'

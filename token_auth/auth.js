@@ -75,4 +75,4 @@ const refreshAccesssToken = async (refreshToken, lifetime) => {
   return response.data;
 }
 
-module.exports = { login, register, refreshAccesssToken }
+module.exports = { login, register, refreshAccesssToken, DOMAIN }
