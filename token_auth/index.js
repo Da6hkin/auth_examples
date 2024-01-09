@@ -127,19 +127,28 @@ app.get('/logout', (req, res) => {
 
 
 
-app.post('/api/login', async (req, res) => {
-	const { login, password } = req.body;
-	const response = await auth.login(login, password);
-	if (response) {
-		req.session.username = login;
-		req.session.login = login;
-		req.session.access_token = response.access_token;
-		req.session.expires_at = Math.floor(Date.now() / 1000) + response.expires_in;
-		req.session.refresh_token = response.refresh_token;
-		res.json({ token: req.sessionId });
-	}
-	res.status(401).send();
+app.post('/api/login', (req, res) => {
+	console.log(auth.redirectUrl());
+	res.redirect(auth.redirectUrl());
+});
 
+app.get('/oidc-callback', async (req, res) => {
+  const tokens = await auth.getTokensFromCode(req.query.code);
+
+  if (tokens) {
+    res.cookie('refresh_token', tokens.refresh_token, {
+      httpOnly: true,
+      secure: false,
+    });
+    res.cookie('access_token', tokens.access_token, {
+      httpOnly: false,
+      secure: false,
+    });
+
+    res.redirect('/');
+  } else {
+    res.status(401).send();
+  }
 });
 
 app.post('/api/register', async (req, res) => {
